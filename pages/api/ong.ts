@@ -8,39 +8,57 @@ export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
-  const image = (
-    await axios.get(EviePhotos[Math.floor(Math.random() * EviePhotos.length)], {
-      responseType: "arraybuffer",
-    })
-  ).data as Buffer;
-
-  const { width, height } = (() => {
+  const { width, height, eviePhoto } = (() => {
     const { width: w, height: h } = req.query;
+    const eviePhoto = req.query.evie === "false" ? false : true;
 
     if (typeof w !== "string" || typeof h !== "string")
-      return { width: 500, height: 500 };
+      return { width: 500, height: 500, eviePhoto };
 
     const width = parseInt(w);
     const height = parseInt(h);
 
-    if (isNaN(width) || isNaN(height)) return { width: 500, height: 500 };
+    if (isNaN(width) || isNaN(height))
+      return { width: 500, height: 500, eviePhoto };
 
-    return { width, height };
+    return { width, height, eviePhoto };
   })();
 
-  const resizedImage = sharp(image);
+  const resizedPhoto = await (async () => {
+    if (eviePhoto) {
+      const image = (
+        await axios.get(
+          EviePhotos[Math.floor(Math.random() * EviePhotos.length)],
+          {
+            responseType: "arraybuffer",
+          }
+        )
+      ).data as Buffer;
 
-  resizedImage.resize(width, height);
+      const resizedImage = sharp(image);
 
-  resizedImage.jpeg({ quality: 80 });
+      resizedImage.resize(width, height);
+
+      resizedImage.jpeg({ quality: 80 });
+
+      return resizedImage;
+    } else {
+      return null;
+    }
+  })();
 
   const canvas = new Canvas(width, height);
   const ctx = canvas.getContext("2d");
 
-  const img = new Image();
-  img.src = await resizedImage.toBuffer();
+  if (resizedPhoto) {
+    const image = new Image();
+    image.src = await resizedPhoto.toBuffer();
 
-  ctx.drawImage(img, 0, 0, width, height);
+    ctx.drawImage(image, 0, 0, width, height);
+  } else {
+    ctx.fillStyle = `#${Math.floor(Math.random() * 16777215).toString(16)}`;
+    ctx.fillRect(0, 0, width, height);
+  }
 
   ctx.beginPath();
   ctx.setLineDash([5, 15]);
