@@ -1,9 +1,8 @@
+import { Canvas, Image } from "@napi-rs/canvas";
 import axios from "axios";
 import type { NextApiRequest, NextApiResponse } from "next";
 import sharp from "sharp";
 import { EviePhotos } from "../../utils/constants";
-
-import { Canvas, Image } from "skia-canvas";
 
 export default async function handler(
   req: NextApiRequest,
@@ -55,7 +54,7 @@ export default async function handler(
   ctx.globalAlpha = 0.5;
   ctx.fillText(`${width} x ${height}`, width / 2 - 50, height / 2 + 10);
 
-  const buffer = await canvas.toBuffer("jpeg");
+  const buffer = await canvas.toBuffer("image/jpeg");
 
   res.setHeader("Content-Type", "image/jpeg");
   res.setHeader("Cache-Control", "no-cache");
